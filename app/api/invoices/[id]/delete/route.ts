@@ -1,18 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { query, sql } from "@/lib/db"
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     // Delete invoice items first (due to foreign key constraint)
-    await sql`DELETE FROM invoice_items WHERE invoice_id = ${params.id}`
+    await query(sql`DELETE FROM invoice_items WHERE invoice_id = ${params.id}`)
 
     // Delete the invoice
-    const [invoice] = await sql`
+    const invoice = await query(sql`
       DELETE FROM invoices WHERE id = ${params.id}
       RETURNING *
-    `
+    `)
 
-    if (!invoice) {
+    if (!invoice[0]) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
     }
 

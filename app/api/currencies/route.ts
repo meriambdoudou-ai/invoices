@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { query, sql } from "@/lib/db"
 
 export async function GET() {
   try {
-    const currencies = await sql`
+    const currencies = await query(sql`
       SELECT * FROM currencies ORDER BY is_base DESC, code ASC
-    `
+    `)
     return NextResponse.json(currencies)
   } catch (error) {
     console.error("Error fetching currencies:", error)

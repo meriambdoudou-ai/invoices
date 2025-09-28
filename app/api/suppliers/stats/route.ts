@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { query, sql } from "@/lib/db"
 
 export async function GET() {
   try {
-    const suppliers = await sql`
+    const suppliers = await query(sql`
       SELECT 
         s.*,
         COUNT(i.id) as invoice_count,
@@ -13,7 +13,7 @@ export async function GET() {
       LEFT JOIN invoices i ON s.id = i.supplier_id
       GROUP BY s.id, s.name, s.email, s.phone, s.address, s.tax_id, s.iban, s.bic, s.rib, s.created_at, s.updated_at
       ORDER BY s.name ASC
-    `
+    `)
 
     return NextResponse.json(suppliers)
   } catch (error) {

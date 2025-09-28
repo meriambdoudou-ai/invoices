@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { query, sql } from "@/lib/db"
 
 export async function GET() {
   try {
     // Get dashboard statistics
-    const [stats] = await sql`
+    const stats = await query(sql`
       SELECT 
         (SELECT COUNT(*) FROM invoices) as total_invoices,
         (SELECT COUNT(*) FROM suppliers) as total_suppliers,
@@ -12,20 +12,20 @@ export async function GET() {
         (SELECT COALESCE(SUM(total_amount_tnd), 0) FROM invoices WHERE 
          EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) AND
          EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)) as monthly_total_tnd
-    `
+    `)
 
     // Get recent invoices
-    const recentInvoices = await sql`
+    const recentInvoices = await query(sql`
       SELECT i.*, s.name as supplier_name, c.code as currency_code
       FROM invoices i
       LEFT JOIN suppliers s ON i.supplier_id = s.id
       LEFT JOIN currencies c ON i.currency_id = c.id
       ORDER BY i.created_at DESC
       LIMIT 5
-    `
+    `)
 
     // Get upcoming payments
-    const upcomingPayments = await sql`
+    const upcomingPayments = await query(sql`
       SELECT i.*, s.name as supplier_name, c.code as currency_code,
              (i.due_date - CURRENT_DATE) as days_until_due
       FROM invoices i
@@ -34,10 +34,10 @@ export async function GET() {
       WHERE i.status = 'pending' AND i.due_date >= CURRENT_DATE
       ORDER BY i.due_date ASC
       LIMIT 5
-    `
+    `)
 
     return NextResponse.json({
-      stats,
+      stats: stats[0],
       recent_invoices: recentInvoices,
       upcoming_payments: upcomingPayments,
     })
